@@ -1,0 +1,838 @@
+---
+sidebar: sidebar 
+permalink: trident-docker/stor-config.html 
+keywords: deploy, trident, docker, trident for docker, nfs, iscsi, protcol, nfs protocol, iscsi protocol, configure host, host config, storage config, options, variables, ontap, element, cvs on gcp, anf, azure netapp files 
+summary: Consulta le opzioni di configurazione disponibili per le configurazioni di Astra Trident. 
+---
+= Opzioni di configurazione dello storage
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/
+
+
+[role="lead"]
+Consulta le opzioni di configurazione disponibili per le configurazioni di Astra Trident.
+
+
+
+== Opzioni di configurazione globale
+
+Queste opzioni di configurazione si applicano a tutte le configurazioni Astra Trident, indipendentemente dalla piattaforma di storage utilizzata.
+
+[cols="3*"]
+|===
+| Opzione | Descrizione | Esempio 
+
+
+| `version`  a| 
+Numero di versione del file di configurazione
+ a| 
+1
+
+
+
+| `storageDriverName`  a| 
+Nome del driver di storage
+ a| 
+`ontap-nas`, `ontap-san`, `ontap-nas-economy`,
+`ontap-nas-flexgroup`, `solidfire-san`, `azure-netapp-files`, o. `gcp-cvs`
+
+
+
+| `storagePrefix`  a| 
+Prefisso opzionale per i nomi dei volumi. Impostazione predefinita: "Netappdvp_".
+ a| 
+staging_
+
+
+
+| `limitVolumeSize`  a| 
+Restrizione opzionale sulle dimensioni dei volumi. Predefinito: "" (non applicato)
+ a| 
+10 g.
+
+|===
+
+TIP: Non utilizzare `storagePrefix` (Incluso il valore predefinito) per i backend degli elementi. Per impostazione predefinita, il `solidfire-san` il driver ignora questa impostazione e non utilizza un prefisso. Si consiglia di utilizzare un tenantId specifico per la mappatura dei volumi Docker o i dati degli attributi che vengono popolati con la versione Docker, le informazioni sul driver e il nome raw di Docker nei casi in cui sia stato utilizzato il comando dei nomi.
+
+Sono disponibili opzioni predefinite per evitare di doverle specificare su ogni volume creato. Il `size` l'opzione è disponibile per tutti i tipi di controller. Consultare la sezione relativa alla configurazione di ONTAP per un esempio su come impostare le dimensioni predefinite del volume.
+
+[cols="3*"]
+|===
+| Opzione | Descrizione | Esempio 
+
+
+| `size`  a| 
+Dimensione predefinita opzionale per i nuovi volumi. Predefinito: "1G"
+ a| 
+10 G.
+
+|===
+
+
+== Configurazione di ONTAP
+
+Oltre ai valori di configurazione globali sopra indicati, quando si utilizza ONTAP, sono disponibili le seguenti opzioni di primo livello.
+
+[cols="3*"]
+|===
+| Opzione | Descrizione | Esempio 
+
+
+| `managementLIF`  a| 
+Indirizzo IP della LIF di gestione ONTAP. È possibile specificare un nome di dominio completo (FQDN).
+ a| 
+10.0.0.1
+
+
+
+| `dataLIF`  a| 
+L'indirizzo IP del protocollo LIF; verrà derivato se non specificato. Per `ontap-nas` Driver *only*, è possibile specificare un FQDN, nel qual caso il FQDN verrà utilizzato per le operazioni di montaggio NFS. Per `ontap-san` Driver, l'impostazione predefinita prevede l'utilizzo di tutti gli IP LIF dei dati dalla SVM e l'utilizzo di multipath iSCSI. Specifica di un indirizzo IP per `dataLIF` per `ontap-san` i driver forzano il driver a disabilitare multipath e a utilizzare solo l'indirizzo specificato.
+ a| 
+10.0.0.2
+
+
+
+| `svm`  a| 
+Macchina virtuale per lo storage da utilizzare (obbligatorio, se la LIF di gestione è una LIF del cluster)
+ a| 
+svm_nfs
+
+
+
+| `username`  a| 
+Nome utente per la connessione al dispositivo di storage
+ a| 
+vsadmin
+
+
+
+| `password`  a| 
+Password per la connessione al dispositivo di storage
+ a| 
+segreto
+
+
+
+| `aggregate`  a| 
+Aggregato per il provisioning (facoltativo; se impostato, deve essere assegnato alla SVM). Per `ontap-nas-flexgroup` driver, questa opzione viene ignorata. Tutti gli aggregati assegnati alla SVM vengono utilizzati per il provisioning di un volume FlexGroup.
+ a| 
+aggr1
+
+
+
+| `limitAggregateUsage`  a| 
+Facoltativo, non eseguire il provisioning se l'utilizzo è superiore a questa percentuale
+ a| 
+75%
+
+
+
+| `nfsMountOptions`  a| 
+Controllo dettagliato delle opzioni di montaggio NFS; il valore predefinito è "-o nfsvers=3". *Disponibile solo per `ontap-nas` e. `ontap-nas-economy` driver*. https://www.netapp.com/pdf.html?item=/media/10720-tr-4067.pdf["Fare clic qui per informazioni sulla configurazione degli host NFS"^].
+ a| 
+-o nfsvers=4
+
+
+
+| `igroupName`  a| 
+L'igroup utilizzato dal plugin; il default è "netappdvp". *Disponibile solo per il fiume `ontap-san`d*.
+ a| 
+miigroup
+
+
+
+| `limitVolumeSize`  a| 
+Dimensione massima del volume richiedente e dimensione massima del volume padre qtree. *Per `ontap-nas-economy` Driver, questa opzione limita inoltre le dimensioni dei FlexVol creati*.
+ a| 
+300 g.
+
+
+
+| `qtreesPerFlexvol`  a| 
+Il numero massimo di qtree per FlexVol deve essere compreso nell'intervallo [50, 300], il valore predefinito è 200. *Per `ontap-nas-economy` Driver, questa opzione consente di personalizzare il numero massimo di qtree per FlexVol*.
+ a| 
+300
+
+|===
+Sono disponibili opzioni predefinite per evitare di doverle specificare su ogni volume creato:
+
+[cols="3*"]
+|===
+| Opzione | Descrizione | Esempio 
+
+
+| `spaceReserve`  a| 
+Modalità di riserva dello spazio; "nessuno" (thin provisioning) o "volume" (thick)
+ a| 
+nessuno
+
+
+
+| `snapshotPolicy`  a| 
+Policy di Snapshot da utilizzare, il valore predefinito è "nessuno"
+ a| 
+nessuno
+
+
+
+| `snapshotReserve`  a| 
+Snapshot Reserve percent (percentuale riserva snapshot), il valore predefinito è "" per accettare il valore predefinito di ONTAP
+ a| 
+10
+
+
+
+| `splitOnClone`  a| 
+Dividere un clone dal suo padre al momento della creazione, per impostazione predefinita su "false"
+ a| 
+falso
+
+
+
+| `encryption`  a| 
+Attiva NetApp Volume Encryption (NVE) sul nuovo volume; l'impostazione predefinita è `false`. NVE deve essere concesso in licenza e abilitato sul cluster per utilizzare questa opzione.
+
+Se NAE è attivato sul backend, tutti i volumi forniti in Astra Trident saranno abilitati per NAE.
+
+Per ulteriori informazioni, fare riferimento a: link:../trident-reco/security-reco.html["Come funziona Astra Trident con NVE e NAE"].
+ a| 
+vero
+
+
+
+| `unixPermissions`  a| 
+Opzione NAS per volumi NFS con provisioning, valore predefinito "777"
+ a| 
+777
+
+
+
+| `snapshotDir`  a| 
+Opzione NAS per l'accesso a `.snapshot` directory, per impostazione predefinita impostata su "false"
+ a| 
+vero
+
+
+
+| `exportPolicy`  a| 
+Opzione NAS per l'utilizzo della policy di esportazione NFS, per impostazione predefinita "default"
+ a| 
+predefinito
+
+
+
+| `securityStyle`  a| 
+Opzione NAS per l'accesso al volume NFS fornito, per impostazione predefinita "unix"
+ a| 
+misto
+
+
+
+| `fileSystemType`  a| 
+OPZIONE SAN per selezionare il tipo di file system, il valore predefinito è "ext4"
+ a| 
+xfs
+
+
+
+| `tieringPolicy`  a| 
+Policy di tiering da utilizzare, il valore predefinito è "nessuno"; "solo snapshot" per la configurazione SVM-DR precedente a ONTAP 9.5
+ a| 
+nessuno
+
+|===
+
+
+=== Opzioni di scalabilità
+
+Il `ontap-nas` e. `ontap-san` I driver creano un ONTAP FlexVol per ogni volume Docker. ONTAP supporta fino a 1000 FlexVol per nodo cluster con un massimo di 12,000 FlexVol. Se i requisiti del volume Docker rientrano in tale limite, il `ontap-nas` Il driver è la soluzione NAS preferita a causa delle funzionalità aggiuntive offerte da FlexVol, come le snapshot Docker-volume-granulare e la clonazione.
+
+Se hai bisogno di più volumi Docker di quelli che possono essere contenuti nei limiti FlexVol, scegli `ontap-nas-economy` o il `ontap-san-economy` driver.
+
+Il `ontap-nas-economy` Driver crea volumi Docker come Qtree ONTAP all'interno di un pool di FlexVol gestiti automaticamente. I qtree offrono una scalabilità di gran lunga superiore, fino a 100,000 per nodo cluster e 2,400,000 per cluster, a scapito di alcune funzionalità. Il `ontap-nas-economy` Il driver non supporta snapshot o cloning granulari dei volumi Docker.
+
+
+NOTE: Il `ontap-nas-economy` Il driver non è attualmente supportato in Docker Swame, perché Swarm non orchestrava la creazione di volumi su più nodi.
+
+Il `ontap-san-economy` Driver crea volumi Docker come LUN ONTAP all'interno di un pool condiviso di FlexVol gestiti automaticamente. In questo modo, ogni FlexVol non è limitato a un solo LUN e offre una migliore scalabilità per i carichi di lavoro SAN. A seconda dello storage array, ONTAP supporta fino a 16384 LUN per cluster. Poiché i volumi sono LUN sottostanti, questo driver supporta snapshot e cloning Docker-volume-granulare.
+
+Scegliere `ontap-nas-flexgroup` il driver per aumentare il parallelismo a un singolo volume che può crescere nell'intervallo dei petabyte con miliardi di file. Alcuni casi di utilizzo ideali per FlexGroups includono ai/ML/DL, big data e analytics, build software, streaming, repository di file e così via. Trident utilizza tutti gli aggregati assegnati a una SVM durante il provisioning di un volume FlexGroup. Il supporto di FlexGroup in Trident ha anche le seguenti considerazioni:
+
+* Richiede ONTAP versione 9.2 o successiva.
+* Al momento della stesura del presente documento, FlexGroups supporta solo NFS v3.
+* Si consiglia di attivare gli identificatori NFSv3 a 64 bit per SVM.
+* La dimensione minima consigliata per il FlexGroup è di 100 GB.
+* La clonazione non è supportata per i volumi FlexGroup.
+
+
+Per informazioni su FlexGroups e workload appropriati per FlexGroups, vedere https://www.netapp.com/pdf.html?item=/media/12385-tr4571pdf.pdf["Guida all'implementazione e alle Best practice per i volumi NetApp FlexGroup"^].
+
+Per ottenere funzionalità avanzate e scalabilità enorme nello stesso ambiente, è possibile eseguire più istanze del Docker Volume Plugin, con una sola applicazione `ontap-nas` e un altro utilizzo `ontap-nas-economy`.
+
+
+
+=== File di configurazione ONTAP di esempio
+
+*Esempio NFS per `ontap-nas` driver*
+
+[listing]
+----
+{
+    "version": 1,
+    "storageDriverName": "ontap-nas",
+    "managementLIF": "10.0.0.1",
+    "dataLIF": "10.0.0.2",
+    "svm": "svm_nfs",
+    "username": "vsadmin",
+    "password": "secret",
+    "aggregate": "aggr1",
+    "defaults": {
+      "size": "10G",
+      "spaceReserve": "none",
+      "exportPolicy": "default"
+    }
+}
+----
+*Esempio NFS per `ontap-nas-flexgroup` driver*
+
+[listing]
+----
+{
+    "version": 1,
+    "storageDriverName": "ontap-nas-flexgroup",
+    "managementLIF": "10.0.0.1",
+    "dataLIF": "10.0.0.2",
+    "svm": "svm_nfs",
+    "username": "vsadmin",
+    "password": "secret",
+    "defaults": {
+      "size": "100G",
+      "spaceReserve": "none",
+      "exportPolicy": "default"
+    }
+}
+----
+*Esempio NFS per `ontap-nas-economy` driver*
+
+[listing]
+----
+{
+    "version": 1,
+    "storageDriverName": "ontap-nas-economy",
+    "managementLIF": "10.0.0.1",
+    "dataLIF": "10.0.0.2",
+    "svm": "svm_nfs",
+    "username": "vsadmin",
+    "password": "secret",
+    "aggregate": "aggr1"
+}
+----
+*Esempio iSCSI per `ontap-san` driver*
+
+[listing]
+----
+{
+    "version": 1,
+    "storageDriverName": "ontap-san",
+    "managementLIF": "10.0.0.1",
+    "dataLIF": "10.0.0.3",
+    "svm": "svm_iscsi",
+    "username": "vsadmin",
+    "password": "secret",
+    "aggregate": "aggr1",
+    "igroupName": "myigroup"
+}
+----
+*Esempio NFS per `ontap-san-economy` driver*
+
+[listing]
+----
+{
+    "version": 1,
+    "storageDriverName": "ontap-san-economy",
+    "managementLIF": "10.0.0.1",
+    "dataLIF": "10.0.0.3",
+    "svm": "svm_iscsi_eco",
+    "username": "vsadmin",
+    "password": "secret",
+    "aggregate": "aggr1",
+    "igroupName": "myigroup"
+}
+----
+
+
+== Configurazione del software Element
+
+Oltre ai valori di configurazione globali, quando si utilizza il software Element (NetApp HCI/SolidFire), queste opzioni sono disponibili.
+
+[cols="3*"]
+|===
+| Opzione | Descrizione | Esempio 
+
+
+| `Endpoint`  a| 
+https://<login>:<password>@<mvip>/json-rpc/<element-version>
+ a| 
+https://admin:admin@192.168.160.3/json-rpc/8.0
+
+
+
+| `SVIP`  a| 
+Porta e indirizzo IP iSCSI
+ a| 
+10.0.0.7:3260
+
+
+
+| `TenantName`  a| 
+Tenant SolidFireF da utilizzare (creato se non trovato)
+ a| 
+"docker"
+
+
+
+| `InitiatorIFace`  a| 
+Specificare l'interfaccia quando si limita il traffico iSCSI all'interfaccia non predefinita
+ a| 
+"predefinito"
+
+
+
+| `Types`  a| 
+Specifiche QoS
+ a| 
+Vedere l'esempio riportato di seguito
+
+
+
+| `LegacyNamePrefix`  a| 
+Prefisso per installazioni Trident aggiornate. Se è stata utilizzata una versione di Trident precedente alla 1.3.2 ed è stato eseguito un aggiornamento con i volumi esistenti, è necessario impostare questo valore per accedere ai volumi precedenti che sono stati mappati tramite il metodo del nome del volume.
+ a| 
+"netappdvp-"
+
+|===
+Il `solidfire-san` Il driver non supporta Docker Swarm.
+
+
+
+=== Esempio di file di configurazione del software Element
+
+[listing]
+----
+{
+    "version": 1,
+    "storageDriverName": "solidfire-san",
+    "Endpoint": "https://admin:admin@192.168.160.3/json-rpc/8.0",
+    "SVIP": "10.0.0.7:3260",
+    "TenantName": "docker",
+    "InitiatorIFace": "default",
+    "Types": [
+        {
+            "Type": "Bronze",
+            "Qos": {
+                "minIOPS": 1000,
+                "maxIOPS": 2000,
+                "burstIOPS": 4000
+            }
+        },
+        {
+            "Type": "Silver",
+            "Qos": {
+                "minIOPS": 4000,
+                "maxIOPS": 6000,
+                "burstIOPS": 8000
+            }
+        },
+        {
+            "Type": "Gold",
+            "Qos": {
+                "minIOPS": 6000,
+                "maxIOPS": 8000,
+                "burstIOPS": 10000
+            }
+        }
+    ]
+}
+----
+
+
+== Cloud Volumes Service (CVS) su configurazione GCP
+
+Astra Trident supporta i volumi con il tipo di servizio CVS predefinito attivato https://cloud.google.com/architecture/partners/netapp-cloud-volumes/service-types["GCP"^]. Astra Trident non supporta volumi CVS inferiori a 100 GiB indipendentemente dal minimo consentito dal tipo di servizio CVS. Pertanto, Trident crea automaticamente un volume da 100 GiB se il volume richiesto è inferiore alle dimensioni minime.
+
+Oltre ai valori di configurazione globali, quando si utilizza CVS su GCP, queste opzioni sono disponibili.
+
+[cols="3*"]
+|===
+| Opzione | Descrizione | Esempio 
+
+
+| `apiRegion`  a| 
+Regione dell'account CVS (obbligatoria). È la regione GCP in cui il backend eseguirà il provisioning dei volumi.
+ a| 
+"us-west2"
+
+
+
+| `projectNumber`  a| 
+Numero di progetto GCP (obbligatorio). Si trova nella schermata iniziale del portale Web GCP.
+ a| 
+"123456789012"
+
+
+
+| `hostProjectNumber`  a| 
+Numero di progetto host VPC condiviso GCP (richiesto se si utilizza un VPC condiviso)
+ a| 
+"098765432109"
+
+
+
+| `apiKey`  a| 
+Chiave API per l'account di servizio GCP con ruolo di amministratore CVS (obbligatorio). È il contenuto in formato JSON del file di chiave privata di un account di servizio GCP (copia integrale nel file di configurazione del backend). L'account del servizio deve avere il ruolo netappcloud.admin.
+ a| 
+(contenuto del file delle chiavi private)
+
+
+
+| `secretKey`  a| 
+Chiave segreta dell'account CVS (obbligatoria). Si trova nel portale web CVS in Impostazioni account > accesso API.
+ a| 
+"predefinito"
+
+
+
+| `proxyURL`  a| 
+URL proxy se il server proxy ha richiesto di connettersi all'account CVS. Il server proxy può essere un proxy HTTP o un proxy HTTPS. Nel caso di un proxy HTTPS, la convalida del certificato viene ignorata per consentire l'utilizzo di certificati autofirmati nel server proxy. *I server proxy con autenticazione abilitata non sono supportati*.
+ a| 
+"http://proxy-server-hostname/”
+
+
+
+| `nfsMountOptions`  a| 
+Opzioni di montaggio NFS; il valore predefinito è "-o nfsvers=3"
+ a| 
+"nfsvers=3,proto=tcp,timeo=600"
+
+
+
+| `serviceLevel`  a| 
+Livello di performance (standard, premium, Extreme), impostazione predefinita "standard"
+ a| 
+"premium"
+
+
+
+| `network`  a| 
+"Rete GCP utilizzata per i volumi CVS, impostazione predefinita "predefinita"
+ a| 
+"predefinito"
+
+|===
+
+NOTE: Se si utilizza una rete VPC condivisa, è necessario specificare entrambi `projectNumber` e. `hostProjectNumber`. In tal caso, `projectNumber` è il progetto di servizio e. `hostProjectNumber` è il progetto host.
+
+Quando si utilizza CVS su GCP, sono disponibili queste impostazioni predefinite delle opzioni del volume.
+
+[cols="3*"]
+|===
+| Opzione | Descrizione | Esempio 
+
+
+| `exportRule`  a| 
+Elenco di accesso NFS (indirizzi e/o subnet CIDR), valore predefinito "0.0.0.0/0"
+ a| 
+"10.0.1.0/24,10.0.2.100"
+
+
+
+| `snapshotDir`  a| 
+Controlla la visibilità di `.snapshot` directory
+ a| 
+"falso"
+
+
+
+| `snapshotReserve`  a| 
+Snapshot Reserve percent (percentuale riserva snapshot), il valore predefinito è "" per accettare il valore predefinito CVS pari a 0
+ a| 
+"10"
+
+
+
+| `size`  a| 
+Dimensione del volume, valore predefinito "100GiB"
+ a| 
+"10T"
+
+|===
+
+
+=== Esempio di CVS sul file di configurazione GCP
+
+[listing]
+----
+{
+    "version": 1,
+    "storageDriverName": "gcp-cvs",
+    "projectNumber": "012345678901",
+    "apiRegion": "us-west2",
+    "apiKey": {
+        "type": "service_account",
+        "project_id": "my-gcp-project",
+        "private_key_id": "1234567890123456789012345678901234567890",
+        "private_key": "-----BEGIN PRIVATE KEY-----\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nznHczZsrrtHisIsAbOguSaPIKeyAZNchRAGzlzZE4jK3bl/qp8B4Kws8zX5ojY9m\nXsYg6gyxy4zq7OlwWgLwGa==\n-----END PRIVATE KEY-----\n",
+        "client_email": "cloudvolumes-admin-sa@my-gcp-project.iam.gserviceaccount.com",
+        "client_id": "123456789012345678901",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/cloudvolumes-admin-sa%40my-gcp-project.iam.gserviceaccount.com"
+    },
+    "proxyURL": "http://proxy-server-hostname/"
+}
+----
+
+
+== Configurazione di Azure NetApp Files
+
+Per configurare e utilizzare un https://azure.microsoft.com/en-us/services/netapp/["Azure NetApp Files"^] back-end, è necessario quanto segue:
+
+* `subscriptionID` Da un abbonamento Azure con Azure NetApp Files attivato
+* `tenantID`, `clientID`, e. `clientSecret` da un https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal["Registrazione dell'app"^] In Azure Active Directory con autorizzazioni sufficienti per il servizio Azure NetApp Files
+* Ubicazione di Azure che ne contiene almeno una https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-delegate-subnet["subnet delegata"^]
+
+
+
+TIP: Se si utilizza Azure NetApp Files per la prima volta o in una nuova posizione, è necessaria una configurazione iniziale di https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-quickstart-set-up-account-create-volumes?tabs=azure-portal["guida rapida"^] ti guideranno.
+
+
+NOTE: Astra Trident 21.04.0 e versioni precedenti non supportano i pool di capacità QoS manuali.
+
+[cols="3*"]
+|===
+| Opzione | Descrizione | Predefinito 
+
+
+| `version`  a| 
+Sempre 1
+ a| 
+
+
+
+| `storageDriverName`  a| 
+"azure-netapp-files"
+ a| 
+
+
+
+| `backendName`  a| 
+Nome personalizzato per il backend dello storage
+ a| 
+Nome del driver + "_" + caratteri casuali
+
+
+
+| `subscriptionID`  a| 
+L'ID dell'abbonamento dell'abbonamento Azure
+ a| 
+
+
+
+| `tenantID`  a| 
+L'ID tenant di una registrazione app
+ a| 
+
+
+
+| `clientID`  a| 
+L'ID client di una registrazione dell'applicazione
+ a| 
+
+
+
+| `clientSecret`  a| 
+Il segreto del client da una registrazione dell'applicazione
+ a| 
+
+
+
+| `serviceLevel`  a| 
+Uno tra "Standard", "Premium" o "Ultra"
+ a| 
+"" (casuale)
+
+
+
+| `location`  a| 
+Nome della posizione Azure in cui verranno creati nuovi volumi
+ a| 
+"" (casuale)
+
+
+
+| `virtualNetwork`  a| 
+Nome di una rete virtuale con una subnet delegata
+ a| 
+"" (casuale)
+
+
+
+| `subnet`  a| 
+Nome di una subnet delegata a. `Microsoft.Netapp/volumes`
+ a| 
+"" (casuale)
+
+
+
+| `nfsMountOptions`  a| 
+Controllo dettagliato delle opzioni di montaggio NFS
+ a| 
+"-o nfsvers=3"
+
+
+
+| `limitVolumeSize`  a| 
+Fallire il provisioning se la dimensione del volume richiesta è superiore a questo valore
+ a| 
+"" (non applicato per impostazione predefinita)
+
+|===
+
+NOTE: Il servizio Azure NetApp Files non supporta volumi di dimensioni inferiori a 100 GB. Per semplificare l'implementazione delle applicazioni, Trident crea automaticamente volumi da 100 GB se viene richiesto un volume più piccolo.
+
+Per impostazione predefinita, è possibile controllare il provisioning di ciascun volume utilizzando queste opzioni in una sezione speciale della configurazione.
+
+[cols="3*"]
+|===
+| Opzione | Descrizione | Predefinito 
+
+
+| `exportRule`  a| 
+Regola o regole di esportazione per i nuovi volumi. Deve essere un elenco separato da virgole di qualsiasi combinazione di indirizzi IPv4 o subnet IPv4 nella notazione CIDR.
+ a| 
+"0.0.0.0/0"
+
+
+
+| `snapshotDir`  a| 
+Controlla la visibilità di `.snapshot` directory
+ a| 
+"falso"
+
+
+
+| `size`  a| 
+La dimensione predefinita dei nuovi volumi
+ a| 
+"100 G"
+
+|===
+
+
+=== Configurazioni Azure NetApp Files di esempio
+
+*Esempio 1: Configurazione backend minima per Azure-netapp-Files*
+
+Questa è la configurazione backend minima assoluta. Con questa configurazione, Trident scoprirà tutti gli account NetApp, i pool di capacità e le subnet delegate ad ANF in ogni sede in tutto il mondo e inserirà nuovi volumi in uno di essi in maniera casuale.
+
+Questa configurazione è utile quando si inizia a utilizzare ANF e si provano le cose, tuttavia, in pratica, è necessario fornire un ambito aggiuntivo per i volumi che si effettua il provisioning per assicurarsi che abbiano le caratteristiche desiderate e finiscano in una rete vicina al calcolo che lo utilizza. Per ulteriori dettagli, vedere gli esempi successivi.
+
+[listing]
+----
+{
+    "version": 1,
+    "storageDriverName": "azure-netapp-files",
+    "subscriptionID": "9f87c765-4774-fake-ae98-a721add45451",
+    "tenantID": "68e4f836-edc1-fake-bff9-b2d865ee56cf",
+    "clientID": "dd043f63-bf8e-fake-8076-8de91e5713aa",
+    "clientSecret": "SECRET"
+}
+----
+*Esempio 2: Singola posizione e livello di servizio specifico per Azure-netapp-Files*
+
+Questa configurazione di back-end colloca i volumi nella posizione "eastus" di Azure in un pool di capacità "Premium". Trident rileva automaticamente tutte le sottoreti delegate ad ANF in quella posizione e inserisce un nuovo volume su una di esse in modo casuale.
+
+[listing]
+----
+{
+    "version": 1,
+    "storageDriverName": "azure-netapp-files",
+    "subscriptionID": "9f87c765-4774-fake-ae98-a721add45451",
+    "tenantID": "68e4f836-edc1-fake-bff9-b2d865ee56cf",
+    "clientID": "dd043f63-bf8e-fake-8076-8de91e5713aa",
+    "clientSecret": "SECRET",
+    "location": "eastus",
+    "serviceLevel": "Premium"
+}
+----
+*Esempio 3: Configurazione avanzata per Azure-netapp-Files*
+
+Questa configurazione di back-end riduce ulteriormente l'ambito del posizionamento del volume in una singola subnet e modifica alcune impostazioni predefinite di provisioning del volume.
+
+[listing]
+----
+{
+    "version": 1,
+    "storageDriverName": "azure-netapp-files",
+    "subscriptionID": "9f87c765-4774-fake-ae98-a721add45451",
+    "tenantID": "68e4f836-edc1-fake-bff9-b2d865ee56cf",
+    "clientID": "dd043f63-bf8e-fake-8076-8de91e5713aa",
+    "clientSecret": "SECRET",
+    "location": "eastus",
+    "serviceLevel": "Premium",
+    "virtualNetwork": "my-virtual-network",
+    "subnet": "my-subnet",
+    "nfsMountOptions": "nfsvers=3,proto=tcp,timeo=600",
+    "limitVolumeSize": "500Gi",
+    "defaults": {
+        "exportRule": "10.0.0.0/24,10.0.1.0/24,10.0.2.100",
+        "size": "200Gi"
+    }
+}
+----
+*Esempio 4: Pool di storage virtuali con file Azure-netapp*
+
+Questa configurazione di back-end definisce più configurazioni link:../trident-concepts/virtual-storage-pool.html["pool di storage"^] in un singolo file. Ciò è utile quando si dispone di più pool di capacità che supportano diversi livelli di servizio e si desidera creare classi di storage in Kubernetes che ne rappresentano.
+
+Questo sta semplicemente graffiando la superficie della potenza dei pool di storage virtuali e delle relative etichette.
+
+[listing]
+----
+{
+    "version": 1,
+    "storageDriverName": "azure-netapp-files",
+    "subscriptionID": "9f87c765-4774-fake-ae98-a721add45451",
+    "tenantID": "68e4f836-edc1-fake-bff9-b2d865ee56cf",
+    "clientID": "dd043f63-bf8e-fake-8076-8de91e5713aa",
+    "clientSecret": "SECRET",
+    "nfsMountOptions": "nfsvers=3,proto=tcp,timeo=600",
+    "labels": {
+        "cloud": "azure"
+    },
+    "location": "eastus",
+
+    "storage": [
+        {
+            "labels": {
+                "performance": "gold"
+            },
+            "serviceLevel": "Ultra"
+        },
+        {
+            "labels": {
+                "performance": "silver"
+            },
+            "serviceLevel": "Premium"
+        },
+        {
+            "labels": {
+                "performance": "bronze"
+            },
+            "serviceLevel": "Standard",
+        }
+    ]
+}
+----

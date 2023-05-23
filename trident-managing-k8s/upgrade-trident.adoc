@@ -1,0 +1,85 @@
+---
+sidebar: sidebar 
+permalink: trident-managing-k8s/upgrade-trident.html 
+keywords: upgrade, trident, methods, operator, tridentctl, helm 
+summary: 'Astra Trident segue una cadenza di rilascio trimestrale, fornendo quattro release principali ogni anno di calendario. Ogni nuova release si basa sulle release precedenti, fornendo nuove funzionalità e miglioramenti delle performance, oltre a correzioni di bug e miglioramenti. Ti consigliamo di eseguire l"upgrade almeno una volta all"anno per sfruttare le nuove funzionalità di Astra Trident.' 
+---
+= Aggiorna Astra Trident
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/
+
+
+[role="lead"]
+Astra Trident segue una cadenza di rilascio trimestrale, fornendo quattro release principali ogni anno di calendario. Ogni nuova release si basa sulle release precedenti, fornendo nuove funzionalità e miglioramenti delle performance, oltre a correzioni di bug e miglioramenti. Ti consigliamo di eseguire l'upgrade almeno una volta all'anno per sfruttare le nuove funzionalità di Astra Trident.
+
+
+NOTE: L'aggiornamento a una release con cinque release in anticipo richiede l'esecuzione di un aggiornamento a più fasi.
+
+
+
+== Determinare la versione a cui eseguire l'aggiornamento
+
+* È possibile eseguire l'aggiornamento a. `YY.MM` rilasciare dal `YY-1.MM` release ed eventuali release intermedie. Ad esempio, è possibile eseguire un aggiornamento diretto alla versione 20.07 dalla versione 19.07 e successive (incluse le versioni DOT, ad esempio 19.07.1).
+* Se si dispone di una versione precedente, è necessario eseguire un aggiornamento a più fasi. Ciò richiede l'aggiornamento alla versione più recente che si adatta alla finestra di quattro release. Ad esempio, se si utilizza 18.07 e si desidera eseguire l'aggiornamento alla versione 20.07, seguire la procedura di aggiornamento in più fasi come indicato di seguito:
++
+** Primo aggiornamento da 18.07 a 19.07. Consultare la documentazione della rispettiva release per ottenere istruzioni specifiche per l'aggiornamento.
+** Eseguire l'aggiornamento da 19.07 a 20.07.
+
+
+
+
+
+IMPORTANT: Tutti gli aggiornamenti per le versioni 19.04 e precedenti richiedono la migrazione dei metadati di Astra Trident da soli `etcd` Agli oggetti CRD. Verificare la documentazione della release per comprendere il funzionamento dell'aggiornamento.
+
+
+WARNING: Durante l'aggiornamento, è importante fornire `parameter.fsType` poll `StorageClasses` Utilizzato da Astra Trident. È possibile eliminare e ricreare `StorageClasses` senza interrompere i volumi preesistenti. Si tratta di un requisito **** per l'applicazione https://kubernetes.io/docs/tasks/configure-pod-container/security-context/["contesti di sicurezza"^] Per volumi SAN. Il https://github.com/NetApp/trident/tree/master/trident-installer/sample-input["esempio di input"^] la directory contiene esempi, ad esempio[`storage-class-basic.yaml.templ`^] e.[`storage-class-bronze-default.yaml`^]. Per ulteriori informazioni, vedere link:../trident-rn.html["Problemi noti"^].
+
+
+
+== Quale percorso di upgrade dovrei scegliere?
+
+È possibile eseguire l'aggiornamento utilizzando uno dei seguenti percorsi:
+
+* Utilizzando l'operatore Trident.
+* Utilizzo di `tridentctl`.
+
+
+
+WARNING: CSI Volume Snapshots è ora una funzionalità GA, a partire da Kubernetes 1.20. Quando si aggiorna Astra Trident, tutti i CRS e i CRD di snapshot alfa precedenti (classi di snapshot dei volumi, snapshot dei volumi e contenuti di snapshot dei volumi) devono essere rimossi prima di eseguire l'aggiornamento. Fare riferimento a. https://netapp.io/2020/01/30/alpha-to-beta-snapshots/["questo blog"^] Comprendere i passaggi necessari per la migrazione delle snapshot Alpha alle specifiche beta/GA.
+
+È possibile utilizzare l'operatore Trident per eseguire l'aggiornamento se vengono soddisfatte le seguenti condizioni:
+
+* Si utilizza CSI Trident (19.07 e versioni successive).
+* Hai una release di Trident basata su CRD (19.07 e versioni successive).
+* Non si sta eseguendo un'installazione personalizzata (utilizzando YAML personalizzati).
+
+
+
+WARNING: Non utilizzare l'operatore per aggiornare Trident se si utilizza un `etcd`Versione Trident basata su (19.04 o precedente).
+
+Se non si desidera utilizzare l'operatore o si dispone di un'installazione personalizzata che non può essere supportata dall'operatore, è possibile eseguire l'aggiornamento utilizzando `tridentctl`. Questo è il metodo preferito per gli aggiornamenti di Trident release 19.04 e precedenti.
+
+
+
+== Modifiche all'operatore
+
+La release 21.01 di Astra Trident introduce alcune importanti modifiche architetturali all'operatore, vale a dire quanto segue:
+
+* L'operatore è ora *con ambito cluster*. Le istanze precedenti dell'operatore Trident (versioni da 20.04 a 20.10) erano *namespace-scope*. Un operatore con ambito cluster è vantaggioso per i seguenti motivi:
++
+** Responsabilità delle risorse: L'operatore gestisce ora le risorse associate a un'installazione di Astra Trident a livello di cluster. Nell'ambito dell'installazione di Astra Trident, l'operatore crea e gestisce diverse risorse utilizzando `ownerReferences`. Manutenzione `ownerReferences` Su risorse con ambito cluster possono generare errori su alcuni distributori Kubernetes come OpenShift. Questo è mitigato da un operatore con ambito cluster. Per la riparazione automatica e l'applicazione di patch alle risorse Trident, questo è un requisito essenziale.
+** Pulizia durante la disinstallazione: Una rimozione completa di Astra Trident richiederebbe l'eliminazione di tutte le risorse associate. Un operatore con ambito spazio dei nomi potrebbe riscontrare problemi con la rimozione delle risorse con ambito del cluster (come ClusterRole, ClusterRoleBinding e PodSecurityPolicy) e portare a una pulizia incompleta. Un operatore con ambito cluster elimina questo problema. Gli utenti possono disinstallare completamente Astra Trident e installare di nuovo, se necessario.
+
+
+* `TridentProvisioner` viene ora sostituito con `TridentOrchestrator` Come risorsa personalizzata utilizzata per installare e gestire Astra Trident. Inoltre, viene introdotto un nuovo campo in `TridentOrchestrator` spec. Gli utenti possono specificare che lo spazio dei nomi Trident deve essere installato/aggiornato utilizzando `spec.namespace` campo. Puoi dare un'occhiata a un esempio https://github.com/NetApp/trident/blob/stable/v21.01/deploy/crds/tridentorchestrator_cr.yaml["qui"^].
+
+
+
+
+== Trova ulteriori informazioni
+
+* link:upgrade-operator.html["Eseguire l'aggiornamento utilizzando l'operatore Trident"^]
+* 
+
