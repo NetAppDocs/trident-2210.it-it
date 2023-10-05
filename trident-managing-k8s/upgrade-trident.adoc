@@ -34,7 +34,8 @@ NOTE: L'aggiornamento a una release con cinque release in anticipo richiede l'es
 IMPORTANT: Tutti gli aggiornamenti per le versioni 19.04 e precedenti richiedono la migrazione dei metadati di Astra Trident da soli `etcd` Agli oggetti CRD. Verificare la documentazione della release per comprendere il funzionamento dell'aggiornamento.
 
 
-WARNING: Durante l'aggiornamento, è importante fornire `parameter.fsType` poll `StorageClasses` Utilizzato da Astra Trident. È possibile eliminare e ricreare `StorageClasses` senza interrompere i volumi preesistenti. Si tratta di un requisito **** per l'applicazione https://kubernetes.io/docs/tasks/configure-pod-container/security-context/["contesti di sicurezza"^] Per volumi SAN. Il https://github.com/NetApp/trident/tree/master/trident-installer/sample-input["esempio di input"^] la directory contiene esempi, ad esempio[`storage-class-basic.yaml.templ`^] e.[`storage-class-bronze-default.yaml`^]. Per ulteriori informazioni, vedere link:../trident-rn.html["Problemi noti"^].
+WARNING: Durante l'aggiornamento, è importante fornire `parameter.fsType` poll `StorageClasses` Utilizzato da Astra Trident. È possibile eliminare e ricreare `StorageClasses` senza interrompere i volumi preesistenti. Si tratta di un requisito **** per l'applicazione https://kubernetes.io/docs/tasks/configure-pod-container/security-context/["contesti di sicurezza"^] Per volumi SAN. Il https://github.com/NetApp/trident/tree/master/trident-installer/sample-input["esempio di input"^] la directory contiene esempi, ad esempio[`storage-class-basic.yaml.templ`^] e.[`storage-class-bronze-default.yaml`^].
+Per ulteriori informazioni, vedere link:../trident-rn.html["Problemi noti"^].
 
 
 

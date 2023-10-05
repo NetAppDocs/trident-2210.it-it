@@ -28,7 +28,7 @@ NOTE: Il `WaitForFirstConsumer` la modalità di binding non richiede etichette d
 .Di cosa hai bisogno
 Per utilizzare la topologia CSI, è necessario disporre di quanto segue:
 
-* Un cluster Kubernetes che esegue un link:requirements.html["Versione Kubernetes supportata"]
+* Un cluster Kubernetes che esegue un link:../trident-get-started/requirements.html["Versione Kubernetes supportata"]
 +
 [listing]
 ----
